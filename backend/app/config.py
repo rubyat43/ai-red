@@ -2,8 +2,12 @@
 # Purpose: Central configuration using Pydantic Settings.
 # Loads environment variables and provides sensible defaults for weights, thresholds, and drivers.
 
+from pathlib import Path
 from typing import Dict, List
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+_ROOT_DIR = _BACKEND_DIR.parent
 
 
 class Settings(BaseSettings):
@@ -47,7 +51,7 @@ class Settings(BaseSettings):
     allowed_target_hosts: List[str] = ["localhost", "127.0.0.1", "agent-green", "agent-blue"]
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(str(_ROOT_DIR / ".env"), str(_BACKEND_DIR / ".env"), ".env"),
         env_file_encoding="utf-8",
         extra="ignore"
     )

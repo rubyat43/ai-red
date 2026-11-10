@@ -1,8 +1,19 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY || "dev-secret-key-12345";
+
+function getHeaders(withJson = false): Record<string, string> {
+  const headers: Record<string, string> = {
+    "X-API-Key": API_KEY,
+  };
+  if (withJson) {
+    headers["Content-Type"] = "application/json";
+  }
+  return headers;
+}
 
 export async function fetchDeploymentState() {
   try {
-    const res = await fetch(`${API_URL}/api/deployments/state`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/api/deployments/state`, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch deployment state");
     return await res.json();
   } catch (error) {
@@ -20,7 +31,7 @@ export async function fetchDeploymentState() {
 
 export async function fetchValidationRuns() {
   try {
-    const res = await fetch(`${API_URL}/api/validation-runs`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/api/validation-runs`, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch validation runs");
     return await res.json();
   } catch (error) {
@@ -31,18 +42,29 @@ export async function fetchValidationRuns() {
 
 export async function fetchValidationRun(id: string) {
   try {
-    const res = await fetch(`${API_URL}/api/validation-runs/${id}`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/api/validation-runs/${id}`, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch validation run");
-    return await res.json();
+    const data = await res.json();
+    // Normalize attack_results to also populate results for UI compatibility
+    const mappedResults = (data.attack_results || data.results || []).map((r: any) => ({
+      ...r,
+      success: r.is_success ?? r.success ?? false,
+      response: r.agent_reply ?? r.response ?? "",
+      reasoning: r.notes ?? r.reasoning ?? "",
+    }));
+    return {
+      ...data,
+      results: mappedResults,
+    };
   } catch (error) {
     console.error("fetchValidationRun:", error);
-    return { id, version_id: "unknown", status: "not found", decision: null, risk_score: null, results: [] };
+    return { id, version_id: "unknown", status: "not found", decision: null, risk_score: null, results: [], attack_results: [] };
   }
 }
 
 export async function fetchSettings() {
   try {
-    const res = await fetch(`${API_URL}/api/settings`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/api/settings`, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch settings");
     return await res.json();
   } catch (error) {
@@ -53,8 +75,8 @@ export async function fetchSettings() {
 
 export async function updateSettings(data: { risk_threshold: number }) {
   const res = await fetch(`${API_URL}/api/settings`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    method: "PUT",
+    headers: getHeaders(true),
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to update settings");
@@ -63,8 +85,8 @@ export async function updateSettings(data: { risk_threshold: number }) {
 
 export async function triggerValidationRun(versionId: string) {
   const res = await fetch(`${API_URL}/api/validation-runs`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: getHeaders(true),
     body: JSON.stringify({ version_id: versionId }),
   });
   if (!res.ok) throw new Error("Failed to trigger validation run");
@@ -73,7 +95,7 @@ export async function triggerValidationRun(versionId: string) {
 
 export async function fetchAgentVersions() {
   try {
-    const res = await fetch(`${API_URL}/api/agent-versions`, { cache: 'no-store' });
+    const res = await fetch(`${API_URL}/api/agent-versions`, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch agent versions");
     return await res.json();
   } catch (error) {

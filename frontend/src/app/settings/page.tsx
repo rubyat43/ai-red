@@ -1,6 +1,8 @@
 import { fetchSettings, updateSettings } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = "force-dynamic";
+
 
 export default async function SettingsPage() {
   const settings = await fetchSettings();

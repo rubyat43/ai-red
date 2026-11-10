@@ -2,6 +2,8 @@ import { fetchValidationRuns, fetchAgentVersions, triggerValidationRun } from "@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 
+export const dynamic = "force-dynamic";
+
 
 export default async function RunsPage() {
   const runs = await fetchValidationRuns();

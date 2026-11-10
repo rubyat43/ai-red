@@ -1,15 +1,25 @@
-version: '3.8'
-
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "${PORT:-8000}:8000"
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=sqlite:///./blue_green_state.db
-      - LLM_API_KEY=${LLM_API_KEY:-}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - PORT=8000
+      - HOST=0.0.0.0
+      - CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost:3000","http://127.0.0.1:3000"]}
+      - API_KEY=${API_KEY:-dev-secret-key-12345}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./data/redteam.db}
+      - DEPLOYMENT_DRIVER=${DEPLOYMENT_DRIVER:-local}
+      - LLM_MODE=${LLM_MODE:-mock}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+      - RISK_THRESHOLD=${RISK_THRESHOLD:-0.25}
+      - MAX_RESPONSE_TIME_MS=${MAX_RESPONSE_TIME_MS:-4000}
     volumes:
       - backend_data:/app/data
 
@@ -19,8 +29,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_API_KEY=${NEXT_PUBLIC_API_KEY:-dev-secret-key-12345}
     depends_on:
       - backend
 
